@@ -12,7 +12,7 @@ public class SocketBoi
 		{
 			BufferedReader userin = new BufferedReader(new InputStreamReader(System.in));
 			
-			Socket socket = new Socket("localhost", 1234);
+			Socket socket = new Socket(args[0], 1234);
 			BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			
 			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
