@@ -15,39 +15,31 @@ public class ServerBoi
 			
 			Socket client = null;
 			
+			if (server == null)
+			{
+				System.out.println("something boinked, server is null");
+				
+				System.exit(1);
+			}
+			
 			while (true)
 			{
-				if (server == null)
-				{
-					System.out.println("something boinked, server is null");
-					
-					System.exit(1);
-				}
-				
 				client = server.accept();
-				
-				
 				
 				BufferedReader userin = new BufferedReader(new InputStreamReader(System.in));
 				
 				BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
 				PrintWriter out = new PrintWriter(client.getOutputStream(), false);
 				
-				out.println("sup");
+				out.println("Hello!");
 				out.flush();
 				
-				out.println("asdf");
-				out.flush();
-				
+				String inStr = "";
 				String outStr = "";
+				int c = -2;
 				
-				while (true)
+				while (client.getInetAddress().isReachable(5))
 				{
-					if (in.ready())
-					{
-						System.out.println("Client: " + in.readLine());
-					}
-					
 					if (userin.ready())
 					{
 						outStr = userin.readLine();
@@ -60,8 +52,30 @@ public class ServerBoi
 						out.println(outStr);
 						out.flush();
 					}
+					
+					if (in.ready())
+					{
+						if ((c = in.read()) == -1)
+						{
+							System.out.println("Client disconnected.");
+							
+							break;
+						}
+						
+						inStr += (char) c;
+						
+						while ((c = in.read()) != '\n')
+						{
+							inStr += (char) c;
+						}
+						
+						System.out.println("Client: " + inStr);
+						
+						inStr = "";
+					}
 				}
 				
+				userin.close();
 				in.close();
 				out.close();
 				
