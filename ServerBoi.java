@@ -1,14 +1,30 @@
 import java.net.Socket;
 import java.net.ServerSocket;
+import java.net.SocketException;
 
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.io.PrintWriter;
 
-public class ServerBoi
+public class ServerBoi implements Runnable
 {
+	static BufferedReader userin;
+	
+	static BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+	
+	static PrintWriter out;
+	
+	static boolean connected = false;
+	
 	public static void main(String[] args)
 	{
+		ServerBoi sb = new ServerBoi();
+		
+		Thread t = new Thread(sb);
+		
+		t.start();
+		
 		try
 		{
 			ServerSocket server = new ServerSocket(1234);
@@ -26,60 +42,78 @@ public class ServerBoi
 			{
 				client = server.accept();
 				
-				BufferedReader userin = new BufferedReader(new InputStreamReader(System.in));
+				userin = new BufferedReader(new InputStreamReader(System.in));
 				
-				BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-				PrintWriter out = new PrintWriter(client.getOutputStream(), false);
+				in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+				
+				out = new PrintWriter(client.getOutputStream(), false);
 				
 				out.println("Hello!");
 				out.flush();
 				
-				String inStr = "";
-				String outStr = "";
-				int c = -2;
+				System.out.println("N: New connection from " + client.getInetAddress().toString().substring(1) + "!");
 				
-				while (client.getInetAddress().isReachable(5))
+				connected = true;
+				
+				while (connected)
 				{
 					if (userin.ready())
 					{
-						outStr = userin.readLine();
-						
-						if (outStr.equals(":quit"))
-						{
-							break;
-						}
-						
-						out.println(outStr);
+						out.println(userin.readLine());
 						out.flush();
-					}
-					
-					if (in.ready())
-					{
-						if ((c = in.read()) == -1)
-						{
-							System.out.println("Client disconnected.");
-							
-							break;
-						}
-						
-						inStr += (char) c;
-						
-						while ((c = in.read()) != '\n')
-						{
-							inStr += (char) c;
-						}
-						
-						System.out.println("Client: " + inStr);
-						
-						inStr = "";
 					}
 				}
 				
-				userin.close();
 				in.close();
 				out.close();
 				
 				client.close();
+			}
+		}
+		
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	public void run()
+	{
+		try
+		{
+			in.mark(0);
+			
+			String inStr;
+			
+			while (true)
+			{
+				Thread.sleep(0); // java loop glitch workaround
+				
+				while (connected)
+				{
+					if (in.ready())
+					{
+						inStr = in.readLine();
+						
+						System.out.println("Client: " + inStr);
+					}
+					
+					else
+					{
+						in.mark(1);
+						
+						if (in.read() == -1)
+						{
+							System.out.println("N: Client disconnected.");
+							connected = false;
+							
+							break;
+						}
+						
+						in.reset();
+					}
+				}
 			}
 		}
 		

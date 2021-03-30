@@ -27,21 +27,35 @@ public class SocketBoi
 				{
 					inStr = in.readLine();
 					
+					if (false)
+					{
+						break;
+					}
+					
 					System.out.println("Server: " + inStr);
 				}
 				
-				if (inStr.equals(":quit"))
-				{
-					break;
-				}
-				
-				if (userin.ready())
+				else if (userin.ready())
 				{
 					outStr = userin.readLine();
 					
 					out.println(outStr);
 					out.flush();
 				}
+				/*
+				else
+				{
+					in.mark(1);
+					
+					if (in.read() == -1)
+					{
+						System.out.println("E: Server disconnected.");
+						
+						break;
+					}
+					
+					in.reset();
+				}*/
 			}
 			
 			in.close();
