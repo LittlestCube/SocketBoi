@@ -6,62 +6,89 @@ import java.io.PrintWriter;
 
 public class SocketBoi
 {
+	static BufferedReader userin;
+	static BufferedReader in;
+	
+	static PrintWriter out;
+	
+	static boolean connected = false;
+	
 	public static void main(String[] args)
 	{
-		try
+		Thread readThread = new Thread()
 		{
-			BufferedReader userin = new BufferedReader(new InputStreamReader(System.in));
-			
-			Socket socket = new Socket(args[0], 1234);
-			BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			
-			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-			
-			String inStr = "";
-			
-			String outStr = "";
-			
-			while (true)
+			public void run()
 			{
-				if (in.ready())
+				try
 				{
-					inStr = in.readLine();
+					boolean end = false;
 					
-					if (false)
+					while (!end)
 					{
-						break;
+						Thread.sleep(0); // java loop glitch workaround
+						
+						while (connected)
+						{
+							if (in.ready())
+							{
+								System.out.println("Server: " + in.readLine());
+							}
+							
+							else
+							{
+								in.mark(1);
+								
+								if (in.read() == -1)
+								{
+									System.out.println("N: Server disconnected.");
+									connected = false;
+									end = true;
+								}
+								
+								else
+								{
+									in.reset();
+								}
+							}
+						}
 					}
-					
-					System.out.println("Server: " + inStr);
 				}
 				
-				else if (userin.ready())
+				catch (Exception e)
 				{
-					outStr = userin.readLine();
-					
-					out.println(outStr);
+					e.printStackTrace();
+				}
+			}
+		};
+		
+		readThread.start();
+		
+		try
+		{
+			userin = new BufferedReader(new InputStreamReader(System.in));
+			
+			Socket socket = new Socket(args[0], 1234);
+			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			
+			out = new PrintWriter(socket.getOutputStream(), true);
+			
+			connected = true;
+			
+			while (connected)
+			{
+				if (userin.ready())
+				{
+					out.println(userin.readLine());
 					out.flush();
 				}
-				/*
-				else
-				{
-					in.mark(1);
-					
-					if (in.read() == -1)
-					{
-						System.out.println("E: Server disconnected.");
-						
-						break;
-					}
-					
-					in.reset();
-				}*/
 			}
 			
 			in.close();
 			out.close();
 			
 			socket.close();
+			
+			return;
 		}
 		
 		catch (Exception e)
