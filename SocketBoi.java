@@ -1,8 +1,11 @@
+import java.io.BufferedReader;
+import java.io.PrintWriter;
+
+import java.io.IOException;
+
 import java.net.Socket;
 
 import java.io.InputStreamReader;
-import java.io.BufferedReader;
-import java.io.PrintWriter;
 
 public class SocketBoi
 {
@@ -13,87 +16,107 @@ public class SocketBoi
 	
 	static boolean connected = false;
 	
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
-		Thread readThread = new Thread()
+		SocketGui.makeJFrame("SuperSocket");
+		
+		boolean exit = false;
+		
+		while (!exit)
 		{
-			public void run()
+			Thread readThread = new Thread()
 			{
-				try
+				public void run()
 				{
-					boolean end = false;
-					
-					while (!end)
+					try
 					{
-						Thread.sleep(0); // java loop glitch workaround
+						boolean end = false;
 						
-						while (connected)
+						while (!end)
 						{
-							if (in.ready())
-							{
-								System.out.println("Server: " + in.readLine());
-							}
+							Thread.sleep(0);
 							
-							else
+							while (connected)
 							{
-								in.mark(1);
-								
-								if (in.read() == -1)
+								if (in.ready())
 								{
-									System.out.println("N: Server disconnected.");
-									connected = false;
-									end = true;
+									SocketGui.printText("Server: " + in.readLine());
 								}
 								
 								else
 								{
-									in.reset();
+									in.mark(1);
+									
+									if (in.read() == -1)
+									{
+										SocketGui.printText("N: Server disconnected.");
+										connected = false;
+										end = true;
+									}
+									
+									else
+									{
+										in.reset();
+									}
 								}
 							}
 						}
 					}
+					
+					catch (Exception e)
+					{
+						e.printStackTrace();
+					}
+				}
+			};
+			
+			readThread.start();
+			
+			try
+			{
+				Socket socket;
+				
+				SocketGui.printText("Enter address to connect to!");
+				
+				while (SocketGui.lastMessage.isEmpty())
+				{
+					Thread.sleep(0);
 				}
 				
-				catch (Exception e)
+				String addr = SocketGui.lastMessage;
+				SocketGui.lastMessage = "";
+				
+				socket = new Socket(SocketGui.lastMessage, 1234);
+				
+				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				out = new PrintWriter(socket.getOutputStream(), false);
+				
+				connected = true;
+				
+				SocketGui.jTextArea1.setText("");
+				
+				while (connected)
 				{
-					e.printStackTrace();
+					Thread.sleep(0);
+					
+					if (!SocketGui.lastMessage.isEmpty())
+					{
+						out.println(SocketGui.lastMessage);
+						out.flush();
+						
+						SocketGui.lastMessage = "";
+					}
 				}
+				
+				in.close();
+				
+				socket.close();
 			}
-		};
-		
-		readThread.start();
-		
-		try
-		{
-			userin = new BufferedReader(new InputStreamReader(System.in));
 			
-			Socket socket = new Socket(args[0], 1234);
-			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			
-			out = new PrintWriter(socket.getOutputStream(), true);
-			
-			connected = true;
-			
-			while (connected)
+			catch (Exception e)
 			{
-				if (userin.ready())
-				{
-					out.println(userin.readLine());
-					out.flush();
-				}
+				e.printStackTrace();
 			}
-			
-			in.close();
-			out.close();
-			
-			socket.close();
-			
-			return;
-		}
-		
-		catch (Exception e)
-		{
-			e.printStackTrace();
 		}
 	}
 }
